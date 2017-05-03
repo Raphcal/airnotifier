@@ -108,7 +108,7 @@ class GCMClient(PushService):
 
         payload = self.build_request(regids, data, collapse_key, ttl)
         headers = {"content-type":"application/json", 'Authorization': 'key=%s' % self.apikey}
-        response = requests.post(self.endpoint, data=payload, headers=headers)
+        response = requests.post(self.endpoint, data=payload, headers=headers, verify='/etc/pki/tls/certs/ca-bundle.crt')
 
         if response.status_code == 400:
             raise GCMException('Request could not be parsed as JSON, or it contained invalid fields.')
