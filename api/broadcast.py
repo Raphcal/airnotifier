@@ -55,6 +55,9 @@ class BroadcastHandler(APIBaseHandler):
         # iOS
         sound = data.get('sound', None)
         badge = data.get('badge', None)
+        # Langue et catégorie des articles BDF
+        language = data.get('language', None)
+        category = data.get('category', None)
         self.add_to_log('%s broadcast' % self.appname, alert, "important")
         self.application.send_broadcast(self.appname, self.db,
                 channel=channel,
@@ -62,6 +65,8 @@ class BroadcastHandler(APIBaseHandler):
                 sound=sound,
                 badge=badge,
                 device=device,
+                language=language,
+                category=category,
                 gcm=data.get('gcm', {}),
                 mpns=data.get('mpns', {}),
                 wns=data.get('wns', {}),

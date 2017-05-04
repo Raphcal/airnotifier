@@ -96,6 +96,8 @@ class AirNotifierApp(tornado.web.Application):
         sound   = kwargs.get('sound', None)
         badge   = kwargs.get('badge', None)
         device  = kwargs.get('device', None)
+        language = kwargs.get('language', None)
+        category = kwargs.get('category', None)
         extra   = kwargs.get('extra', {})
         try:
             apns = self.services['apns'][appname][0]
@@ -124,6 +126,12 @@ class AirNotifierApp(tornado.web.Application):
 
         if device:
             conditions.append({'device': device})
+
+        if language:
+            conditions.append({'language': language})
+
+        if category:
+            conditions.append({'categories': category})
 
         tokens = appdb.tokens.find({"$or": conditions})
 

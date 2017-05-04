@@ -215,12 +215,14 @@ class APIBaseHandler(tornado.web.RequestHandler):
 
 class EntityBuilder(object):
     @staticmethod
-    def build_token(token, device, appname, channel, created=time.time()):
+    def build_token(token, device, appname, channel, language = 'fr', categories = [], created=time.time()):
         tokenentity = {}
         tokenentity['device'] = device
         tokenentity['appname'] = appname
         tokenentity['token'] = token
         tokenentity['channel'] = channel
+        tokenentity['language'] = language
+        tokenentity['categories'] = categories
         tokenentity['created'] = created
         return tokenentity
 

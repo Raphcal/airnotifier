@@ -69,6 +69,9 @@ class TokenV2Handler(APIBaseHandler):
         device = data.get('device', DEVICE_TYPE_IOS).lower()
         channel = data.get('channel', 'default')
         devicetoken = data.get('token', '')
+        language = data.get('language', 'fr')
+        # TODO Ajouter des catégories par défaut
+        categories = data.get('categories', [])
 
         if device == DEVICE_TYPE_IOS:
             if len(devicetoken) != 64:
@@ -79,7 +82,7 @@ class TokenV2Handler(APIBaseHandler):
             except Exception as ex:
                 self.send_response(BAD_REQUEST, dict(error='Invalid token'))
 
-        token = EntityBuilder.build_token(devicetoken, device, self.appname, channel)
+        token = EntityBuilder.build_token(devicetoken, device, self.appname, channel, language, categories)
         try:
             result = self.db.tokens.update({'device': device, 'token': devicetoken, 'appname': self.appname}, token, safe=True, upsert=True)
             # result
