@@ -117,6 +117,8 @@ class AirNotifierApp(tornado.web.Application):
             gcm = None
 
         conditions = []
+        mandatoryConditions = [{"$or": conditions}]
+
         if channel == 'default':
             # channel is not set or channel is default
             conditions.append({'channel': {"$exists": False}})
@@ -128,12 +130,12 @@ class AirNotifierApp(tornado.web.Application):
             conditions.append({'device': device})
 
         if language:
-            conditions.append({'language': language})
+            mandatoryConditions.append({'language': language})
 
         if category:
-            conditions.append({'categories': category})
+            mandatoryConditions.append({'categories': category})
 
-        tokens = appdb.tokens.find({"$or": conditions})
+        tokens = appdb.tokens.find({"$and": mandatoryConditions})
 
         regids = []
         try:
