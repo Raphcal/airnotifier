@@ -45,6 +45,7 @@ from constants import RELEASE, VERSION, DEVICE_TYPE_IOS, DEVICE_TYPE_ANDROID, DE
     DEVICE_TYPE_MPNS
 
 define("port", default=8801, help="Application server listen port", type=int)
+define("host", default="0.0.0.0", help="Application server listen host")
 
 define("pemdir", default="pemdir", help="Directory to store pems")
 define("passwordsalt", default="d2o0n1g2s0h3e1n1g", help="Being used to make password hash")
@@ -212,7 +213,7 @@ class AirNotifierApp(tornado.web.Application):
             http_server = tornado.httpserver.HTTPServer(self, ssl_options=ssl_ctx)
         else:
             http_server = tornado.httpserver.HTTPServer(self)
-        http_server.listen(options.port)
+        http_server.listen(options.port, address=options.host)
         _logger.info("AirNotifier is ready")
         try:
             tornado.ioloop.IOLoop.instance().start()
