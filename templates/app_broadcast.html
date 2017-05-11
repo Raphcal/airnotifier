@@ -50,6 +50,24 @@ $(document).ready(function() {
             </div>
         </div>
 
+        <div class="control-group">
+            <label class="control-label" for="language">{{ _('Language') }}</label>
+            <div class="controls">
+                <select class="input-xxlarge" id="language" name="language">
+                    <option value=""></option>
+                    <option value="fr">{{ _('French') }}</option>
+                    <option value="en">{{ _('English') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="category">{{ _('Category') }}</label>
+            <div class="controls">
+                <input type="text" class="input-xxlarge" id="category" name="category">
+            </div>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{{ _('Send') }}</button>
         </div>
