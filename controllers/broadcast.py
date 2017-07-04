@@ -46,11 +46,12 @@ class AppBroadcastHandler(WebBaseHandler):
         alert = self.get_argument('notification').strip()
         language = self.get_argument('language').strip()
         category = self.get_argument('category').strip()
+        url = self.get_argument('url').strip()
         sound = 'default'
         channel = 'default'
         if language == '': language = None
         if category == '': category = None
-        self.application.send_broadcast(self.appname, self.db, channel=channel, alert=alert, sound=sound, language=language, category=category)
+        self.application.send_broadcast(self.appname, self.db, channel=channel, alert=alert, sound=sound, language=language, category=category, url=url)
         self.render("app_broadcast.html", app=app, sent=True)
 
 @route(r"/applications/([^/]+)/broadcast/status")
