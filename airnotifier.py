@@ -100,6 +100,7 @@ class AirNotifierApp(tornado.web.Application):
         language = kwargs.get('language', None)
         category = kwargs.get('category', None)
         extra   = kwargs.get('extra', {})
+        extra['url']     = kwargs.get('url', None)
         try:
             apns = self.services['apns'][appname][0]
         except (IndexError, KeyError):
