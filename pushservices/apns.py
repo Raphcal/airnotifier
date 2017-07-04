@@ -300,7 +300,7 @@ class APNClient(PushService):
         sound = apnsparams.get('sound', None)
         badge = apnsparams.get('badge', None)
         content = apnsparams.get('content', None)
-        customparams = apnsparams.get('extra', None)
+        customparams = kwargs.get('extra', apnsparams.get('custom', None))
         pl = PayLoad(alert=kwargs['alert'], sound=sound, badge=badge, content=content, identifier=0, expiry=None, customparams=customparams)
         self._append_to_queue(token, pl)
 
