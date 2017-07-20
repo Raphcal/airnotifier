@@ -90,8 +90,8 @@ class GCMClient(PushService):
         ttl = gcmparam.get('ttl', None)
         alert = kwargs.get('alert', None)
         data = gcmparam.get('data', kwargs.get('extra', {}))
-        if 'message' not in data:
-            data['message'] = kwargs.get('alert', '')
+        if 'title' not in data:
+            data['title'] = kwargs.get('alert', '')
         return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
 
     def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5):
