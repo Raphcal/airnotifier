@@ -103,6 +103,7 @@ class AirNotifierApp(tornado.web.Application):
         extra['url'] = kwargs.get('url', None)
         extra['language'] = language
         extra['category'] = category
+	extra['title'] = kwargs.get('title', None)
 
         try:
             apns = self.services['apns'][appname][0]
@@ -143,12 +144,16 @@ class AirNotifierApp(tornado.web.Application):
         tokens = appdb.tokens.find({"$and": mandatoryConditions})
 
         regids = []
+        success = 0
         try:
+            _logger.info('Broadcasting "' + alert + '" to ' + str(tokens.count()) + ' devices')
             for token in tokens:
                 t = token.get('token')
                 if token['device'] == DEVICE_TYPE_IOS:
                     if apns is not None:
                         apns.process(token=t, alert=alert, extra=extra, apns=kwargs.get('apns', {}))
+                        _logger.info('> iOS ' + t)
+                        success = success + 1
                 elif token['device'] == DEVICE_TYPE_ANDROID:
                     regids.append(t)
                 elif token['device'] == DEVICE_TYPE_WNS:
@@ -160,11 +165,16 @@ class AirNotifierApp(tornado.web.Application):
         except Exception as ex:
             _logger.error(ex)
 
+        _logger.info('Broadcast was sent to ' + str(success) + ' iOS devices')
+
         # Now sending android notifications
         try:
+            _logger.info('Sending broadcast to ' + str(len(regids)) + ' Android devices')
             if (gcm is not None) and regids:
                 response = gcm.process(token=regids, alert=alert, extra=extra, gcm=kwargs.get('gcm', {}))
                 responsedata = response.json()
+                if responsedata.get('results', 0) != 0:
+                    _logger.info('message_id: %s' % responsedata['results'][0]['message_id'])
         except Exception as ex:
             _logger.error('GCM problem: ' + str(ex))
 
@@ -263,7 +273,7 @@ def init_messaging_agents():
         services['gcm'][app['shortname']] = []
         if 'gcmprojectnumber' in app and 'gcmapikey' in app and 'shortname' in app:
             try:
-                http = GCMClient(app['gcmprojectnumber'], app['gcmapikey'], app['shortname'], 0)
+                http = GCMClient(app['gcmprojectnumber'], app['gcmapikey'], app['shortname'], 42)
             except Exception as ex:
                 _logger.error(ex)
                 continue

@@ -29,8 +29,15 @@
 from . import PushService
 import json
 import requests
+import logging
+import time
+import random
 
-GCM_ENDPOINT = 'https://android.googleapis.com/gcm/send'
+_logger = logging.getLogger('AirNotifierGCM')
+
+# GCM_ENDPOINT = 'https://android.googleapis.com/gcm/send'
+# GCM_ENDPOINT = 'https://gcm-http.googleapis.com/gcm/send'
+GCM_ENDPOINT = 'https://fcm.googleapis.com/fcm/send'
 
 class GCMException(Exception): pass
 
@@ -61,6 +68,7 @@ class GCMClient(PushService):
     def build_request(self, regids, data, collapse_key, ttl):
         payload = {'registration_ids': regids}
         if data:
+            # payload['notification'] = data
             payload['data'] = data
 
         if ttl >= 0:
@@ -88,10 +96,16 @@ class GCMClient(PushService):
         gcmparam = kwargs.get('gcm', {})
         collapse_key = gcmparam.get('collapse_key', None)
         ttl = gcmparam.get('ttl', None)
-        alert = kwargs.get('alert', None)
+	alert = kwargs.get('alert', None)
         data = gcmparam.get('data', kwargs.get('extra', {}))
-        if 'message' not in data:
-            data['message'] = kwargs.get('alert', '')
+
+        if 'title' not in data:
+            data['title'] = alert
+ 	else :
+	    data['body'] = alert
+	
+	data['notId'] = (int(time.time()) % 100000) * 100000 + random.randint(100000, 999999)
+        data['soundname'] = 'default'
         return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
 
     def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5):
@@ -121,6 +135,10 @@ class GCMClient(PushService):
         if responsedata.get('canonical_ids', 0) != 0:
             # means we need to take a look at results, looking for registration_id key
             responsedata['canonical_ids'] = self.reverse_response_info('registration_id', regids, responsedata['results'])
+
+        if responsedata.get('results', 0) != 0:
+            firstResult = responsedata['results'][0]
+            _logger.info('message_id: %s' % firstResult['message_id'])
 
         # Handling errors
         if responsedata.get('failure', 0) != 0:

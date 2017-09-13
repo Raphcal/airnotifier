@@ -297,7 +297,7 @@ class APNClient(PushService):
     def process(self, **kwargs):
         token = kwargs['token']
         apnsparams = kwargs['apns']
-        sound = apnsparams.get('sound', None)
+        sound = apnsparams.get('sound', 'default')
         badge = apnsparams.get('badge', None)
         content = apnsparams.get('content', None)
         customparams = kwargs.get('extra', apnsparams.get('custom', None))

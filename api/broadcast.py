@@ -37,6 +37,7 @@ from routes import route
 from api import APIBaseHandler
 import time
 import logging
+import json
 
 @route(r"/api/v2/broadcast[\/]?")
 class BroadcastHandler(APIBaseHandler):
@@ -52,6 +53,7 @@ class BroadcastHandler(APIBaseHandler):
         device = data.get('device', None)
         # iOS and Android shared params
         alert = ''.join(data.get('alert', '').splitlines())
+	title = data.get('title', None)
         # iOS
         sound = data.get('sound', None)
         badge = data.get('badge', None)
@@ -59,7 +61,7 @@ class BroadcastHandler(APIBaseHandler):
         language = data.get('language', None)
         category = data.get('category', None)
         url = data.get('url', None)
-        self.add_to_log('%s broadcast' % self.appname, alert, "important")
+        self.add_to_log('%s broadcast' % self.appname, '%s (language "%s", category "%s", lang "%s", cat "%s") ' % (alert, language, category, data.get('lang', None), data.get('cat', None)), "important")
         self.application.send_broadcast(self.appname, self.db,
                 channel=channel,
                 alert=alert,
@@ -69,6 +71,7 @@ class BroadcastHandler(APIBaseHandler):
                 language=language,
                 category=category,
                 url=url,
+		title=title,
                 gcm=data.get('gcm', {}),
                 mpns=data.get('mpns', {}),
                 wns=data.get('wns', {}),

@@ -43,6 +43,7 @@ class AppBroadcastHandler(WebBaseHandler):
         self.appname = appname
         app = self.masterdb.applications.find_one({'shortname':appname})
         if not app: raise tornado.web.HTTPError(500)
+        title = self.get_argument('title').strip()
         alert = self.get_argument('notification').strip()
         language = self.get_argument('language').strip()
         category = self.get_argument('category').strip()
@@ -51,7 +52,7 @@ class AppBroadcastHandler(WebBaseHandler):
         channel = 'default'
         if language == '': language = None
         if category == '': category = None
-        self.application.send_broadcast(self.appname, self.db, channel=channel, alert=alert, sound=sound, language=language, category=category, url=url)
+        self.application.send_broadcast(self.appname, self.db, channel=channel, alert=alert, sound=sound, language=language, category=category, url=url, title=title)
         self.render("app_broadcast.html", app=app, sent=True)
 
 @route(r"/applications/([^/]+)/broadcast/status")
