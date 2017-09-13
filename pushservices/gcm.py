@@ -104,7 +104,7 @@ class GCMClient(PushService):
         else:
             data['body'] = alert
 
-        data['notId'] = (int(time.time()) % 100000) * 100000 + random.randint(100000, 999999)
+        data['notId'] = (int(time.time()) % 10000) * 10000 + random.randint(10000, 99999)
         data['soundname'] = 'default'
         return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
 
