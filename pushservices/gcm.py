@@ -96,15 +96,15 @@ class GCMClient(PushService):
         gcmparam = kwargs.get('gcm', {})
         collapse_key = gcmparam.get('collapse_key', None)
         ttl = gcmparam.get('ttl', None)
-	alert = kwargs.get('alert', None)
+        alert = kwargs.get('alert', None)
         data = gcmparam.get('data', kwargs.get('extra', {}))
 
         if 'title' not in data:
             data['title'] = alert
- 	else :
-	    data['body'] = alert
-	
-	data['notId'] = (int(time.time()) % 100000) * 100000 + random.randint(100000, 999999)
+        else:
+            data['body'] = alert
+
+        data['notId'] = (int(time.time()) % 100000) * 100000 + random.randint(100000, 999999)
         data['soundname'] = 'default'
         return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
 
