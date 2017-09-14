@@ -69,7 +69,14 @@ class PayLoad(object):
             self.expiry = expiry
         if not identifier:
             self.identifier = id_generator(4)
-        self.alert = alert
+        if not customparams['title']:
+            self.alert = alert
+        else:
+            self.alert = {
+                'title': customparams['title'], 
+                'body': alert
+            }
+                 
         self.badge = badge
         self.sound = sound
         self.content = content
