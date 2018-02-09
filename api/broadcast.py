@@ -53,7 +53,7 @@ class BroadcastHandler(APIBaseHandler):
         device = data.get('device', None)
         # iOS and Android shared params
         alert = ''.join(data.get('alert', '').splitlines())
-	title = data.get('title', None)
+        title = data.get('title', None)
         # iOS
         sound = data.get('sound', None)
         badge = data.get('badge', None)
@@ -61,7 +61,8 @@ class BroadcastHandler(APIBaseHandler):
         language = data.get('language', None)
         category = data.get('category', None)
         url = data.get('url', None)
-        self.add_to_log('%s broadcast' % self.appname, '%s (language "%s", category "%s", lang "%s", cat "%s") ' % (alert, language, category, data.get('lang', None), data.get('cat', None)), "important")
+        logMessage = 'title: %s<br>message: %s<br>alert: %s<br>language "%s", category "%s"<br>' % (title, data.get('message', None), alert, language, category)
+        self.add_to_log('%s broadcast' % self.appname, logMessage, "important")
         self.application.send_broadcast(self.appname, self.db,
                 channel=channel,
                 alert=alert,
