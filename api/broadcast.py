@@ -61,7 +61,7 @@ class BroadcastHandler(APIBaseHandler):
         language = data.get('language', None)
         category = data.get('category', None)
         url = data.get('url', None)
-        logMessage = 'title: %s\nmessage: %s\nalert: %s\nlanguage "%s", category "%s"' % (title, data.get('message', None), alert, language, category)
+        logMessage = 'title: "%s", message: "%s", alert: "%s", language: "%s", category: "%s"' % (title, data.get('message', None), alert, language, category)
         self.add_to_log('%s broadcast' % self.appname, logMessage, "important")
         self.application.send_broadcast(self.appname, self.db,
                 channel=channel,
