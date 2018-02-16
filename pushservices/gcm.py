@@ -93,9 +93,10 @@ class GCMClient(PushService):
         data = gcmparam.get('data', kwargs.get('extra', {}))
         if 'title' not in data:
             data['title'] = kwargs.get('alert', '')
-        return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
+        appdb = kwargs.get('appdb', None)
+        return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl, appdb=appdb)
 
-    def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5):
+    def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5, appdb=None):
         '''
         Send message to google gcm endpoint
         :param regids: list
@@ -133,11 +134,17 @@ class GCMClient(PushService):
                     # Should remove the registration ID from your server database
                     # because the application was uninstalled from the device or
                     # it does not have a broadcast receiver configured to receive
-                    raise GCMNotRegisteredException(packed_rregisteration_ids)
+                    if appdb is not None:
+                        appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
+                    else:
+                        raise GCMNotRegisteredException(packed_rregisteration_ids)
                 elif errorkey == 'InvalidRegistration':
                     # You should remove the registration ID from your server
                     # database because the application was uninstalled from the device or it does not have a broadcast receiver configured to receive
-                    raise GCMInvalidRegistrationException(packed_rregisteration_ids)
+                    if appdb is not None:
+                        appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
+                    else:
+                        raise GCMInvalidRegistrationException(packed_rregisteration_ids)
                 elif errorkey == 'MismatchSenderId':
                     '''
                     A registration ID is tied to a certain group of senders. When an application registers for GCMClient usage,
