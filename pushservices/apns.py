@@ -69,7 +69,14 @@ class PayLoad(object):
             self.expiry = expiry
         if not identifier:
             self.identifier = id_generator(4)
-        self.alert = alert
+        if not customparams['title']:
+            self.alert = alert
+        else:
+            self.alert = {
+                'title': customparams['title'], 
+                'body': alert
+            }
+                 
         self.badge = badge
         self.sound = sound
         self.content = content
@@ -297,7 +304,7 @@ class APNClient(PushService):
     def process(self, **kwargs):
         token = kwargs['token']
         apnsparams = kwargs['apns']
-        sound = apnsparams.get('sound', None)
+        sound = apnsparams.get('sound', 'default')
         badge = apnsparams.get('badge', None)
         content = apnsparams.get('content', None)
         customparams = kwargs.get('extra', apnsparams.get('custom', None))
