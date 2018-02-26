@@ -166,6 +166,7 @@ class APNFeedback(object):
                 break
         _logger.info("tokens: " + ', '.join(tokens))
         self.appdb.tokens.delete_many({'token': {'$in': tokens}})
+        self.add_to_log('APNS', 'Removed unused tokens: ' + ', '.join(tokens))
 
     def _on_feedback_service_connected(self):
         _logger.info("APNs connected")
@@ -176,20 +177,14 @@ class APNFeedback(object):
 
     def _on_feedback_service_read_streaming(self, data):
         self.buffer += data
-        """ Feedback """
-        fmt = (
-            '!'
-            'I'   # expiry
-            'H'   # token length
-            '32s' # token
-        )
-        if len(data):
-            _logger.info(data)
-            # TODO: Parser les données et supprimer les tokens ou utiliser pyAPNS pour ça
-            (expiry, token_length, token) = struct.unpack_from(fmt, data, 0)
 
-        else:
-            _logger.info("no data")
+    def add_to_log(self, action, info=None, level="info"):
+        log = {}
+        log['action'] = strip_tags(action)
+        log['info'] = strip_tags(info)
+        log['level'] = strip_tags(level)
+        log['created'] = int(time.time())
+        self.appdb.logs.insert(log, safe=True)
 
 
 class APNClient(PushService):
