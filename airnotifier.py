@@ -103,7 +103,7 @@ class AirNotifierApp(tornado.web.Application):
         extra['url'] = kwargs.get('url', None)
         extra['language'] = language
         extra['category'] = category
-	extra['title'] = kwargs.get('title', None)
+        extra['title'] = kwargs.get('title', None)
 
         try:
             apns = self.services['apns'][appname][0]
