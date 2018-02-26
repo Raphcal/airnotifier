@@ -63,8 +63,6 @@ class GCMClient(PushService):
         self.appname = appname
         self.instanceid = instanceid
         self.endpoint = endpoint
-        self.appdb = None
-
 
     def build_request(self, regids, data, collapse_key, ttl):
         payload = {'registration_ids': regids}
@@ -108,10 +106,10 @@ class GCMClient(PushService):
         data['notId'] = (int(time.time()) % 10000) * 10000 + random.randint(10000, 99999)
         data['soundname'] = 'default'
 
-        self.appdb = kwargs.get('appdb', None)
-        return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl)
+        appdb = kwargs.get('appdb', None)
+        return self.send(kwargs['token'], data=data, collapse_key=collapse_key, ttl=ttl, appdb=appdb)
 
-    def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5):
+    def send(self, regids, data=None, collapse_key=None, ttl=None, retries=5, appdb=None):
         '''
         Send message to google gcm endpoint
         :param regids: list
@@ -153,17 +151,19 @@ class GCMClient(PushService):
                     # Should remove the registration ID from your server database
                     # because the application was uninstalled from the device or
                     # it does not have a broadcast receiver configured to receive
-                    if self.appdb is not None:
-                        self.appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
-                        self.add_to_log('FCM', 'Removed unregistered tokens: ' + ', '.join(packed_rregisteration_ids))
+                    if appdb is not None:
+                        self.add_to_log(appdb, 'FCM', 'Removing unregistered tokens: ' + ', '.join(packed_rregisteration_ids))
+                        appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
+                        self.add_to_log(appdb, 'FCM', 'Token cleaning was successful')
                     else:
                         raise GCMNotRegisteredException(packed_rregisteration_ids)
                 elif errorkey == 'InvalidRegistration':
                     # You should remove the registration ID from your server
                     # database because the application was uninstalled from the device or it does not have a broadcast receiver configured to receive
-                    if self.appdb is not None:
-                        self.appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
-                        self.add_to_log('FCM', 'Removed invalid registrations: ' + ', '.join(packed_rregisteration_ids))
+                    if appdb is not None:
+                        self.add_to_log(appdb, 'FCM', 'Removing invalid registrations: ' + ', '.join(packed_rregisteration_ids))
+                        appdb.tokens.delete_many({'token': {'$in': packed_rregisteration_ids}})
+                        self.add_to_log(appdb, 'FCM', 'Token cleaning was successful')
                     else:
                         raise GCMInvalidRegistrationException(packed_rregisteration_ids)
                 elif errorkey == 'MismatchSenderId':
@@ -192,11 +192,11 @@ class GCMClient(PushService):
 
         return response
 
-    def add_to_log(self, action, info=None, level="info"):
+    def add_to_log(self, appdb, action, info=None, level="info"):
         log = {}
         log['action'] = strip_tags(action)
         log['info'] = strip_tags(info)
         log['level'] = strip_tags(level)
         log['created'] = int(time.time())
-        if self.appdb is not None:
-            self.appdb.logs.insert(log, safe=True)
+        if appdb is not None:
+            appdb.logs.insert(log, safe=True)

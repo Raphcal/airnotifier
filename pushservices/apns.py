@@ -172,8 +172,9 @@ class APNFeedback(object):
                 # Break out of while loop
                 break
         _logger.info("tokens: " + ', '.join(tokens))
+        self.add_to_log('APNS', 'Removing unused tokens: ' + ', '.join(tokens))
         self.appdb.tokens.delete_many({'token': {'$in': tokens}})
-        self.add_to_log('APNS', 'Removed unused tokens: ' + ', '.join(tokens))
+        self.add_to_log('APNS', 'Token cleaning was successful')
 
     def _on_feedback_service_connected(self):
         _logger.info("APNs connected")
