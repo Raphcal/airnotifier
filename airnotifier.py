@@ -171,7 +171,7 @@ class AirNotifierApp(tornado.web.Application):
         try:
             _logger.info('Sending broadcast to ' + str(len(regids)) + ' Android devices')
             if (gcm is not None) and regids:
-                response = gcm.process(token=regids, alert=alert, extra=extra, gcm=kwargs.get('gcm', {}))
+                response = gcm.process(token=regids, alert=alert, extra=extra, gcm=kwargs.get('gcm', {}), appdb=appdb)
                 responsedata = response.json()
                 if responsedata.get('results', 0) != 0:
                     _logger.info('message_id: %s' % responsedata['results'][0]['message_id'])

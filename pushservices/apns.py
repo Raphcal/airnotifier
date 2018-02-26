@@ -35,7 +35,7 @@ import struct
 import time
 import os
 from util import *
-from binascii import hexlify, unhexlify
+from binascii import hexlify, unhexlify, b2a_hex
 from tornado import ioloop, iostream
 import string
 import random
@@ -124,7 +124,7 @@ class PayLoad(object):
         return jsontext
 
 class APNFeedback(object):
-    def __init__(self, env="sandbox", certfile="", keyfile="", appname=""):
+    def __init__(self, env="sandbox", certfile="", keyfile="", appname="", appdb=None):
         certexists = file_exists(certfile)
         keyexists = file_exists(keyfile)
         if not certexists:
@@ -138,6 +138,8 @@ class APNFeedback(object):
         self.keyfile = get_filepath(keyfile)
         self.ioloop = ioloop.IOLoop.instance()
         self.appname = appname
+        self.appdb = appdb
+        self.buffer = b''
         self.connect()
 
     def connect(self):
@@ -153,24 +155,43 @@ class APNFeedback(object):
         self.remote_stream.close()
         self.sock.close()
 
+    def parse_feedback(self):
+        _logger.info("parse_feedback")
+        tokens = []
+        buff = self.buffer
+        while len(buff) > 6:
+            token_length = struct.unpack('>H', buff[4:6])[0] # ushort_big_endian
+            bytes_to_read = 6 + token_length
+            if len(buff) >= bytes_to_read:
+                token = b2a_hex(buff[6:bytes_to_read])
+                tokens.append(token)
+
+                # Remove data for current token from buffer
+                buff = buff[bytes_to_read:]
+            else:
+                # Break out of while loop
+                break
+        _logger.info("tokens: " + ', '.join(tokens))
+        self.appdb.tokens.delete_many({'token': {'$in': tokens}})
+        self.add_to_log('APNS', 'Removed unused tokens: ' + ', '.join(tokens))
+
     def _on_feedback_service_connected(self):
         _logger.info("APNs connected")
 
     def _on_feedback_service_read_close(self, data):
+        self.parse_feedback()
         self.shutdown()
 
     def _on_feedback_service_read_streaming(self, data):
-        """ Feedback """
-        fmt = (
-            '!'
-            'I'   # expiry
-            'H'   # token length
-            '32s' # token
-        )
-        if len(data):
-            _logger.info(data)
-        else:
-            _logger.info("no data")
+        self.buffer += data
+
+    def add_to_log(self, action, info=None, level="info"):
+        log = {}
+        log['action'] = strip_tags(action)
+        log['info'] = strip_tags(info)
+        log['level'] = strip_tags(level)
+        log['created'] = int(time.time())
+        self.appdb.logs.insert(log, safe=True)
 
 
 class APNClient(PushService):
