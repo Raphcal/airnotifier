@@ -202,6 +202,9 @@ class AppHandler(WebBaseHandler):
                 self.perform_feedback(app)
 
             if self.get_argument('performinvalidtokensremovaltask', None):
+                logging.info('Searching for invalid tokens')
+                global success
+                success = 'Searching for invalid tokens'
                 self.perform_invalid_tokens_removal(app)
 
             if self.get_argument('launchapns', None):
