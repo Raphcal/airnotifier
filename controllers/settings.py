@@ -94,14 +94,11 @@ class AppHandler(WebBaseHandler):
 
     def perform_invalid_tokens_removal(self, app):
         try:
-            global success
-            success = 'Searching for invalid tokens'
             # Vérifie que la connexion avec l'APNS est démarrée
             if not self.apnsconnections.has_key(app['shortname']):
                 global error
                 error = 'APNS is offline'
                 return
-            success = 'no 1st error'
             # Sélection d'une connexion
             count = len(self.apnsconnections[app['shortname']])
             random.seed(time.time())
@@ -111,9 +108,9 @@ class AppHandler(WebBaseHandler):
                 global error
                 error = 'Please check APNS errors before starting the cleaning process'
                 return
-            success = 'no 2nd error'
             # Envoi des notifications de test
             tokens = self.db.tokens.find()
+            logging.info('Searching for invalid tokens (%d tokens)' % len(tokens))
             bad_tokens = []
             for token in tokens:
                 apnsconnection.process(token=token, alert=None, content=1, extra=None, apns=None)
@@ -124,8 +121,8 @@ class AppHandler(WebBaseHandler):
                     apns_error = apns.getError()
                     if apns_error[:15] == 'Invalid token (':
                         bad_tokens.append(token)
-            # global success
             if len(bad_tokens) > 0:
+                global success
                 # Suppression des mauvais jetons
                 self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
                 success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
@@ -202,9 +199,6 @@ class AppHandler(WebBaseHandler):
                 self.perform_feedback(app)
 
             if self.get_argument('performinvalidtokensremovaltask', None):
-                logging.info('Searching for invalid tokens')
-                global success
-                success = 'Searching for invalid tokens'
                 self.perform_invalid_tokens_removal(app)
 
             if self.get_argument('launchapns', None):
