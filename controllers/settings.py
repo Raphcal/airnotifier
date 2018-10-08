@@ -95,13 +95,11 @@ class AppHandler(WebBaseHandler):
     def perform_invalid_tokens_removal(self, app):
         logging.info('Searching for invalid tokens')
         try:
-            logging.info('Searching for invalid tokens (try declared)')
             # Vérifie que la connexion avec l'APNS est démarrée
             if not self.apnsconnections.has_key(app['shortname']):
                 global error
                 error = 'APNS is offline'
                 return
-            logging.info('no 1st error')
             # Sélection d'une connexion
             count = len(self.apnsconnections[app['shortname']])
             random.seed(time.time())
@@ -111,9 +109,8 @@ class AppHandler(WebBaseHandler):
                 global error
                 error = 'Please check APNS errors before starting the cleaning process'
                 return
-            logging.info('no 2nd error')
             # Envoi des notifications de test
-            tokens = self.db.tokens.find()
+            tokens = self.db.tokens.find( {} )
             logging.info('Searching for invalid tokens (%d tokens)' % len(tokens))
             bad_tokens = []
             for token in tokens:
