@@ -113,7 +113,7 @@ class AppHandler(WebBaseHandler):
             tokens = self.db.tokens.find()
             bad_tokens = []
             for token in tokens:
-                apnsconnection.process(token=token, alert=None, extra=None, apns=push_data)
+                apnsconnection.process(token=token, alert=None, extra=push_data, apns=None)
                 # Pause de 100 millisecondes pour attendre la réponse de l'APNS
                 time.sleep(.100)
                 if apnsconnection.hasError():
