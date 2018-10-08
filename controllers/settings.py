@@ -110,13 +110,13 @@ class AppHandler(WebBaseHandler):
                 error = 'Please check APNS errors before starting the cleaning process'
                 return
             # Envoi des notifications de test
-            tokens = self.db.tokens.find( {} )
-            logging.info('Searching for invalid tokens (%d tokens)' % len(tokens))
+            tokens = self.db.tokens.find()
+            logging.info('Searching for invalid tokens (%d tokens)' + str(len(tokens)))
             bad_tokens = []
             for token in tokens:
                 apnsconnection.process(token=token, alert=None, content=1, extra=None, apns=None)
                 # Pause de 100 millisecondes pour attendre la réponse de l'APNS
-                time.sleep(.100)
+                time.sleep(.500)
                 if apnsconnection.hasError():
                     # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
                     apns_error = apns.getError()
