@@ -120,11 +120,13 @@ class AppHandler(WebBaseHandler):
                     apns_error = apns.getError()
                     if apns_error[:15] == 'Invalid token (':
                         bad_tokens.append(token)
+            global success
             if len(bad_tokens) > 0:
                 # Suppression des mauvais jetons
                 self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
-                global success
                 success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
+            else:
+                success = 'no invalid tokens found in local db'
         except Exception as ex:
             global error
             error = str(ex)
