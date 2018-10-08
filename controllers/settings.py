@@ -109,11 +109,10 @@ class AppHandler(WebBaseHandler):
                 error = 'Please check APNS errors before starting the cleaning process'
                 return
             # Envoi des notifications de test
-            push_data = {'content-available': 1}
             tokens = self.db.tokens.find()
             bad_tokens = []
             for token in tokens:
-                apnsconnection.process(token=token, alert=None, extra=push_data, apns=None)
+                apnsconnection.process(token=token, alert=None, content=1, extra=None, apns=None)
                 # Pause de 100 millisecondes pour attendre la réponse de l'APNS
                 time.sleep(.100)
                 if apnsconnection.hasError():
