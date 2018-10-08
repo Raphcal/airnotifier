@@ -111,7 +111,7 @@ class AppHandler(WebBaseHandler):
                 return
             # Envoi des notifications de test
             tokens = self.db.tokens.find()
-            logging.info('Searching for invalid tokens (among ' + str(len(tokens)) +" tokens)")
+            logging.info('Searching for invalid tokens (among ' + str(tokens.rowcount) +" tokens)")
             bad_tokens = []
             for token in tokens:
                 apnsconnection.process(token=token, alert=None, content=1, extra=None, apns=None)
