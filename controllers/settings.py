@@ -113,13 +113,13 @@ class AppHandler(WebBaseHandler):
             tokens = self.db.tokens.find()
             bad_tokens = []
             for token in tokens:
-                apnsconnection.process(token=token, alert=None, extra=None, apns=push_data)
+                apnsconnection.process(token=token, alert=None, extra=push_data, apns=None)
                 # Pause de 100 millisecondes pour attendre la réponse de l'APNS
                 time.sleep(.100)
                 if apnsconnection.hasError():
                     # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
                     apns_error = apns.getError()
-                    if apns_error[:13] == 'Invalid token':
+                    if apns_error[:15] == 'Invalid token (':
                         bad_tokens.append(token)
             if len(bad_tokens) > 0:
                 # Suppression des mauvais jetons
