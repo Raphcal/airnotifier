@@ -93,8 +93,9 @@ class AppHandler(WebBaseHandler):
         apn = APNFeedback(app.get('environment'), app.get('certfile', ''), app.get('keyfile', ''), app['shortname'], self.db)
 
     def perform_invalid_tokens_removal(self, app):
+        logging.info('Searching for invalid tokens')
         try:
-            logging.info('Searching for invalid tokens')
+            logging.info('Searching for invalid tokens (try declared)')
             # Vérifie que la connexion avec l'APNS est démarrée
             if not self.apnsconnections.has_key(app['shortname']):
                 global error
@@ -124,8 +125,8 @@ class AppHandler(WebBaseHandler):
                     apns_error = apns.getError()
                     if apns_error[:15] == 'Invalid token (':
                         bad_tokens.append(token)
+            global success
             if len(bad_tokens) > 0:
-                global success
                 # Suppression des mauvais jetons
                 self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
                 success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
