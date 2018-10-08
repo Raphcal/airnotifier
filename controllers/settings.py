@@ -92,6 +92,44 @@ class AppHandler(WebBaseHandler):
     def perform_feedback(self, app):
         apn = APNFeedback(app.get('environment'), app.get('certfile', ''), app.get('keyfile', ''), app['shortname'], self.db)
 
+    def perform_invalid_tokens_removal(self, app):
+        try:
+            # Vérifie que la connexion avec l'APNS est démarrée
+            if not self.apnsconnections.has_key(app['shortname']):
+                global error
+                error = 'APNS is offline'
+                return
+            # Sélection d'une connexion
+            count = len(self.apnsconnections[app['shortname']])
+            random.seed(time.time())
+            instanceid = random.randint(0, count - 1)
+            apnsconnection = self.apnsconnections[app['shortname']][instanceid]
+            if apnsconnection.hasError():
+                global error
+                error = 'Please check APNS errors before starting the cleaning process'
+                return
+            # Envoi des notifications de test
+            push_data = {'content-available': 1}
+            tokens = self.db.tokens.find()
+            bad_tokens = []
+            for token in tokens:
+                apnsconnection.process(token=token, alert=None, extra=None, apns=push_data)
+                # Pause de 100 millisecondes pour attendre la réponse de l'APNS
+                time.sleep(.100)
+                if apnsconnection.hasError():
+                    # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
+                    apns_error = apns.getError()
+                    if apns_error[:13] == 'Invalid token':
+                        bad_tokens.append(token)
+            if len(bad_tokens) > 0:
+                # Suppression des mauvais jetons
+                self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
+                global success
+                success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
+        except Exception as ex:
+            global error
+            error = str(ex)
+
     @tornado.web.authenticated
     def post(self, appname):
         try:
@@ -157,6 +195,9 @@ class AppHandler(WebBaseHandler):
 
             if self.get_argument('performfeedbacktask', None):
                 self.perform_feedback(app)
+
+            if self.get_argument('performinvalidtokensremovaltask', None):
+                self.perform_invalid_tokens_removal(app)
 
             if self.get_argument('launchapns', None):
                 logging.info("Start APNS")

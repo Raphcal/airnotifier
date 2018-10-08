@@ -20,6 +20,12 @@
 </div>
 {% end %}
 
+{% if 'success' in globals() %}
+<div class="alert alert-success">
+    <strong>{{ success }}</strong>
+</div>
+{% end %}
+
 <form class="form-horizontal" id="form-app-settings" method="post">
 <input type="hidden" name="appname" value="{{app['shortname']}}" />
 <fieldset>
@@ -114,6 +120,17 @@
                 <input type="hidden" name="performfeedbacktask" value="true" />
                 <button type="submit" class="btn btn-primary">{{ _('Clean up') }}</button>
                 <p class="help-block">Clean up unused device tokens</p>
+            </div>
+        </div>
+    </form>
+    <form class="form-horizontal" method="post">
+        <input type="hidden" name="appname" value="{{app['shortname']}}" />
+        <label class="control-label"> {{ _('Invalid tokens') }}</label>
+        <div class="control-group">
+            <div class="controls">
+                <input type="hidden" name="performinvalidtokensremovaltask" value="true" />
+                <button type="submit" class="btn btn-primary">{{ _('Find and remove invalid tokens') }}</button>
+                <p class="help-block">Clean up invalid device tokens</p>
             </div>
         </div>
     </form>
