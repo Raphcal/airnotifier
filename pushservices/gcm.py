@@ -32,6 +32,7 @@ import requests
 import logging
 import time
 import random
+from util import strip_tags
 
 _logger = logging.getLogger('AirNotifierGCM')
 
