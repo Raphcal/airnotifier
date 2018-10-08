@@ -130,6 +130,7 @@ class AppHandler(WebBaseHandler):
             else:
                 success = 'no invalid tokens found in local db'
         except Exception as ex:
+            _logger.error(ex)
             global error
             error = str(ex)
 
