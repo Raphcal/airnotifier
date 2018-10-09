@@ -53,6 +53,9 @@ from controllers.base import *
 
 @route(r"/applications/([^/]+)/settings[\/]?")
 class AppHandler(WebBaseHandler):
+    def __init__(self):
+        self.success = None
+
     @tornado.web.authenticated
     def get(self, appname):
         if appname == "new":
@@ -71,7 +74,7 @@ class AppHandler(WebBaseHandler):
                 # self.redirect(r"/applications/new")
                 # raise tornado.web.HTTPError(500)
             else:
-                self.render("app_settings.html", app=app)
+                self.render("app_settings.html", app=app, success=self.success)
 
     def start_apns(self, app):
         self.apnsconnections[app['shortname']] = []
@@ -93,50 +96,40 @@ class AppHandler(WebBaseHandler):
         apn = APNFeedback(app.get('environment'), app.get('certfile', ''), app.get('keyfile', ''), app['shortname'], self.db)
 
     def perform_invalid_tokens_removal(self, app):
-        try:
-            # Vérifie que la connexion avec l'APNS est démarrée
-            if not self.apnsconnections.has_key(app['shortname']):
-                global error
-                error = 'APNS is offline'
-                return
+        # Vérifie que la connexion avec l'APNS est démarrée
+        if not self.apnsconnections.has_key(app['shortname']):
+            raise RuntimeError('APNS is offline')
 
-            # Sélection d'une connexion
-            count = len(self.apnsconnections[app['shortname']])
-            random.seed(time.time())
-            instanceid = random.randint(0, count - 1)
-            apns = self.apnsconnections[app['shortname']][instanceid]
+        # Sélection d'une connexion
+        count = len(self.apnsconnections[app['shortname']])
+        random.seed(time.time())
+        instanceid = random.randint(0, count - 1)
+        apns = self.apnsconnections[app['shortname']][instanceid]
+        if apns.hasError():
+            raise RuntimeError('APNS is offline')
+
+        # Envoi des notifications de test
+        tokens = self.db.tokens.find()
+        logging.info('Searching for invalid tokens (among %d tokens)' % tokens.count())
+        bad_tokens = []
+        for token in tokens:
+            apns.process(token=token['token'], content=1, alert={}, extra={'title': None}, apns={})
+            # Pause de 100 millisecondes pour attendre la réponse de l'APNS
+            time.sleep(.500)
             if apns.hasError():
-                global error
-                error = 'Please check APNS errors before starting the cleaning process'
-                return
+                # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
+                apns_error = apns.getError()
+                if apns_error[:15] == 'Invalid token (':
+                    bad_tokens.append(token)
 
-            # Envoi des notifications de test
-            tokens = self.db.tokens.find()
-            logging.info('Searching for invalid tokens (among %d tokens)' % tokens.count())
-            bad_tokens = []
-            for token in tokens:
-                apns.process(token=token['token'], content=1, alert={}, extra={'title': None}, apns={})
-                # Pause de 100 millisecondes pour attendre la réponse de l'APNS
-                time.sleep(.500)
-                if apns.hasError():
-                    # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
-                    apns_error = apns.getError()
-                    if apns_error[:15] == 'Invalid token (':
-                        bad_tokens.append(token)
-
-            logging.info('%d invalid token(s) found in %d tokens' % (len(bad_tokens), tokens.count()))
-            global success
-            if len(bad_tokens) > 0:
-                # Suppression des mauvais jetons
-                self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
-                success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
-            else:
-                success = 'no invalid tokens found in local db'
-        except Exception as ex:
-            logging.error(ex)
-            logging.error(traceback.format_exc())
-            global error
-            error = str(ex)
+        logging.info('%d invalid token(s) found in %d tokens' % (len(bad_tokens), tokens.count()))
+        if len(bad_tokens) > 0:
+            # Suppression des mauvais jetons
+            self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
+            self.success = '%d invalid token(s) found and removed from local db: %s' % (len(bad_tokens), ', '.join(bad_tokens))
+        else:
+            self.success = 'no invalid tokens found in local db'
+        logging.info(self.success)
 
     @tornado.web.authenticated
     def post(self, appname):
