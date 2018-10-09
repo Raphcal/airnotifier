@@ -111,7 +111,7 @@ class AppHandler(WebBaseHandler):
         # Envoi des notifications de test
         tokens = self.db.tokens.find()
         logging.info('Searching for invalid tokens (among ' + str(tokens.count()) +" tokens)")
-        bad_tokens = []    
+        bad_tokens = []
 
         for token in tokens:
             apnsconnection.process(token=token, content=1, apns={}, alert="", extra={'title': 'actual title'})
@@ -122,7 +122,7 @@ class AppHandler(WebBaseHandler):
                 apns_error = apns.getError()
                 if apns_error[:15] == 'Invalid token (':
                     bad_tokens.append(token)
-        
+
         logging.info(str(len(bad_tokens)) +" tokens found on "+ str(tokens.count()) +" tokens")
         global success
         if len(bad_tokens) > 0:
