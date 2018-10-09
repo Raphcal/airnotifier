@@ -115,7 +115,7 @@ class AppHandler(WebBaseHandler):
             logging.info('Searching for invalid tokens (among %d tokens)' % tokens.count())
             bad_tokens = []
             for token in tokens:
-                apns.process(token=token, content=1, alert={}, extra={'title': None}, apns={})
+                apns.process(token=token['token'], content=1, alert={}, extra={'title': None}, apns={})
                 # Pause de 100 millisecondes pour attendre la réponse de l'APNS
                 time.sleep(.500)
                 if apns.hasError():
