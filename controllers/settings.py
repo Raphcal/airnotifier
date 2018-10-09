@@ -106,7 +106,7 @@ class AppHandler(WebBaseHandler):
         instanceid = random.randint(0, count - 1)
         apns = self.apnsconnections[app['shortname']][instanceid]
         if apns.hasError():
-            raise RuntimeError('APNS is offline')
+            raise RuntimeError('APNS encountered an error : ' + apns.getError())
 
         # Envoi des notifications de test
         tokens = self.db.tokens.find({'device': 'ios'})
@@ -133,8 +133,10 @@ class AppHandler(WebBaseHandler):
             result = self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
             self.success = '%d invalid token(s) found and %d removed from local db: %s' % (len(bad_tokens), result.deleted_count, ', '.join(bad_tokens))
         else:
-            self.success = 'no invalid tokens found in local db'
+            self.success = 'No invalid token found in local db'
         logging.info(self.success)
+        # TODO: Faire mieux pour afficher le message
+        raise RuntimeError(self.success)
 
     @tornado.web.authenticated
     def post(self, appname):
