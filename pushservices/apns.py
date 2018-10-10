@@ -333,6 +333,65 @@ class APNClient(PushService):
         pl = PayLoad(alert=kwargs['alert'], sound=sound, badge=badge, content=content, identifier=0, expiry=None, customparams=customparams)
         self._append_to_queue(token, pl)
 
+    def process_now(self, **kwargs):
+        token = kwargs['token']
+        apnsparams = kwargs['apns']
+        sound = apnsparams.get('sound', 'default')
+        badge = apnsparams.get('badge', None)
+        content = apnsparams.get('content', None)
+        customparams = kwargs.get('extra', apnsparams.get('custom', None))
+        payload = PayLoad(alert=kwargs['alert'], sound=sound, badge=badge, content=content, identifier=0, expiry=None, customparams=customparams)
+
+        json = payload.json()
+        json_len = len(json)
+        fmt = (
+            '!'   # network big-endian
+            'b'   # command
+            '4s'  # identifier
+            'I'   # expiry
+            'H'   # token length
+            '32s' # token
+            'H'   # payload length
+            '%ds' # payload
+        ) % json_len
+
+        identifier = payload.identifier
+        expiry = payload.expiry
+
+        frame = struct.pack(fmt, ENHANCED_NOTIFICATION_COMMAND, identifier, expiry,
+                TOKEN_LENGTH, unhexlify(token), json_len, json)
+
+        socket = socket(AF_INET, SOCK_STREAM)
+        socket.connect(self.apnsendpoint)
+        socket.send(frame)
+        data = socket.recv(6)
+        socket.close()
+
+        status_table = {
+                0: "No erros",
+                1: "Processing error",
+                2: "Mssing device token",
+                3: "Missing topic",
+                4: "Missing payload",
+                5: "Invalid token size",
+                6: "Invalid topic size",
+                7: "Invalid payload size",
+                8: "Invalid token",
+               10: "Shutdown",
+              255: "None"}
+
+        if len(data) != 6:
+            raise RuntimeException('Response must be a 6-byte binary string.')
+        else:
+            error_format = (
+                '!'  # network big-endian
+                'b'  # command, should be 8
+                'b'  # status
+                '4s'  # identifier
+            )
+            (command, statuscode, identifier) = struct.unpack_from(error_format, data, 0)
+            return "%s (ID: %s)" % (status_table[statuscode], identifier)
+
     def sendbulk(self, deviceToken, payload):
         """ TODO """
         msghead = '!bI'

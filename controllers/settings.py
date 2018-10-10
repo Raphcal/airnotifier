@@ -115,15 +115,10 @@ class AppHandler(WebBaseHandler):
         for token in tokens:
             t = token.get('token')
             try:
-                apns.process(token=t, content=1, alert={}, extra={'title': None}, apns={})
-                # Pause de 500 millisecondes pour attendre la réponse de l'APNS
-                time.sleep(.500)
-                if apns.hasError():
-                    # En cas d'erreur 'Invalid token', ajout au tableau des mauvais jetons
-                    apns_error = apns.getError()
-                    logging.info('APNS error: ' + apns_error)
-                    if apns_error[:15] == 'Invalid token (':
-                        bad_tokens.append(t)
+                response = apns.process_now(token=t, content=1, alert={}, extra={'title': None}, apns={})
+                logging.info('APNS response for token %s: %s' % (t, response))
+                if response[:15] == 'Invalid token (':
+                    bad_tokens.append(t)
             except Exception as ex:
                 logging.error('An error occured while processing token ' + t)
                 logging.error(traceback.format_exc())
