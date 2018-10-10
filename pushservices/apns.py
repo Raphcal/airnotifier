@@ -29,6 +29,7 @@
 from . import PushService
 from collections import deque
 from socket import socket, AF_INET, SOCK_STREAM
+import ssl
 import json
 import logging
 import struct
@@ -361,11 +362,23 @@ class APNClient(PushService):
         frame = struct.pack(fmt, ENHANCED_NOTIFICATION_COMMAND, identifier, expiry,
                 TOKEN_LENGTH, unhexlify(token), json_len, json)
 
+        context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        context.load_cert_chain(certfile=self.certfile, keyfile=self.keyfile)
+
         sock = socket(AF_INET, SOCK_STREAM)
-        sock.connect(self.apnsendpoint)
-        sock.send(frame)
-        data = sock.recv(6)
-        sock.close()
+        ssl_sock = context.wrap_socket(sock, server_hostname=self.apnsendpoint[0])
+        ssl_sock.connect(self.apnsendpoint)
+        ssl_sock.send(frame)
+        ssl_sock.settimeout(0.2)
+        data = None
+        try:
+            data = ssl_sock.recv(6)
+        except Exception as ex:
+            _logger.debug('No error: ' + str(ex))
+        ssl_sock.close()
+
+        if data == None:
+            return 'No error'
 
         status_table = {
                 0: "No erros",
