@@ -361,7 +361,7 @@ class APNClient(PushService):
         frame = struct.pack(fmt, ENHANCED_NOTIFICATION_COMMAND, identifier, expiry,
                 TOKEN_LENGTH, unhexlify(token), json_len, json)
 
-        socket = socket(AF_INET, SOCK_STREAM)
+        socket = socket.socket(AF_INET, SOCK_STREAM)
         socket.connect(self.apnsendpoint)
         socket.send(frame)
         data = socket.recv(6)

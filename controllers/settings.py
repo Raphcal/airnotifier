@@ -122,11 +122,15 @@ class AppHandler(WebBaseHandler):
             except Exception as ex:
                 logging.error('An error occured while processing token ' + t)
                 logging.error(traceback.format_exc())
-                bad_tokens.append(t)
         if len(bad_tokens) > 0:
             # Suppression des mauvais jetons
             result = self.db.tokens.delete_many({'token': {'$in': bad_tokens}})
-            self.success = '%d invalid token(s) found and %d removed from local db: %s' % (len(bad_tokens), result.deleted_count, ', '.join(bad_tokens))
+            deleted_count = 'unknown'
+            try:
+                deleted_count = result.deleted_count
+            except Exception as ex:
+                logging.error(traceback.format_exc())
+            self.success = '%d invalid token(s) found and %d removed from local db: %s' % (len(bad_tokens), deleted_count, ', '.join(bad_tokens))
         else:
             self.success = 'No invalid token found in local db'
         logging.info(self.success)
